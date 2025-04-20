@@ -3,7 +3,9 @@
 import os
 import re
 import string
+import numpy as np
 from bs4 import BeautifulSoup
+from sklearn.metrics.pairwise import pairwise_distances
 
 # Dataset
 # let's use Large Movie Review Dataset v1.0 (reviews from IMDB): https://ai.stanford.edu/~amaas/data/sentiment/.
@@ -54,6 +56,9 @@ for text in texts:
     tokens = cleaned_text.split()
     vocabulary.update(tokens)
     tokens_per_text.append(tokens)
+
+print(f"\nFinished cleaning and tokenizing. Vocabulary size: {len(vocabulary)}")
+
 vocabulary = sorted(list(vocabulary))
 vocabulary_len = len(vocabulary)
 
@@ -70,13 +75,40 @@ for tokens in tokens_per_text:
 
     bow_matrix.append(vector)
 
+print(f"\nFinished BoW matrix (single word). Shape: ({len(bow_matrix)}, {vocabulary_len})")
+
 ######## Bag of Words model (BoW) - by bigram.           ########
 
 
+######## look for 5 related reviews to the selected one. ########
+bow_matrix = np.array(bow_matrix)
 
-#################################################################
+chosen_text_index = 0
+chosen_text = texts[chosen_text_index]
+
+chosen_vector = bow_matrix[chosen_text_index]
+chosen_vector = chosen_vector.reshape(1, -1)
+
+distances = pairwise_distances(chosen_vector, bow_matrix, metric='euclidean')[0]
+sorted_indices = np.argsort(distances)
 
 
-######## look for 5 similar reviews to the selected one. ########
+# outputs the results
+char_limit_for_text = 500
+print(f"\n *** chosen text #{chosen_text_index}")
+print(chosen_text[:char_limit_for_text] + '...')
 
-# print the result
+num_related_to_find = 5
+print(f"\n *** {num_related_to_find} most related reviews by euclid dist.")
+
+found_count = 0
+for index in sorted_indices:
+    if index == chosen_text_index: continue # skip the chosen text itself
+    if found_count >= num_related_to_find: break
+
+    related_text = texts[index]
+    distance = distances[index]
+
+    print(f"\n *** related text #{index} with distances: {distance:.4f}")
+    print(related_text[:char_limit_for_text] + '...')
+    found_count += 1
