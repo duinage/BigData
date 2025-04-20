@@ -46,7 +46,7 @@ def clean_text(text: str):
     text = re.sub(r'\s+', ' ', text).strip() # Remove extra whitespace.
     return text
 
-######## Bag of Words model (BoW) - by single word.      ########
+########             Bag of Words model (BoW)             ########
 
 # create vocabulary
 vocabulary = set()
@@ -54,6 +54,18 @@ tokens_per_text = []
 for text in texts:
     cleaned_text = clean_text(text)
     tokens = cleaned_text.split()
+            
+    # ##### create bigrams instead of single word
+    # bigrams = []
+    # if len(tokens) >= 2: # Need at least two words to form a bigram
+    #     for j in range(len(tokens) - 1):
+    #         bigram = f"{tokens[j]}_{tokens[j+1]}"
+    #         bigrams.append(bigram)
+
+    # vocabulary.update(bigrams)
+    # tokens_per_text.append(bigrams)
+    # ##### create bigrams instead of single word
+
     vocabulary.update(tokens)
     tokens_per_text.append(tokens)
 
@@ -77,13 +89,10 @@ for tokens in tokens_per_text:
 
 print(f"\nFinished BoW matrix (single word). Shape: ({len(bow_matrix)}, {vocabulary_len})")
 
-######## Bag of Words model (BoW) - by bigram.           ########
-
-
 ######## look for 5 related reviews to the selected one. ########
 bow_matrix = np.array(bow_matrix)
 
-chosen_text_index = 0
+chosen_text_index = 666
 chosen_text = texts[chosen_text_index]
 
 chosen_vector = bow_matrix[chosen_text_index]
@@ -92,9 +101,10 @@ chosen_vector = chosen_vector.reshape(1, -1)
 distances = pairwise_distances(chosen_vector, bow_matrix, metric='euclidean')[0]
 sorted_indices = np.argsort(distances)
 
+np.savetxt("res.txt", distances[sorted_indices])
 
 # outputs the results
-char_limit_for_text = 500
+char_limit_for_text = 200
 print(f"\n *** chosen text #{chosen_text_index}")
 print(chosen_text[:char_limit_for_text] + '...')
 
