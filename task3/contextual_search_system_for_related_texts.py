@@ -3,16 +3,11 @@
 import os
 import re
 import string
-from mpi4py import MPI
 from bs4 import BeautifulSoup
 
 # Dataset
 # let's use Large Movie Review Dataset v1.0 (reviews from IMDB): https://ai.stanford.edu/~amaas/data/sentiment/.
 # I will use only [train/unsup] reviews, because this will be enough for our task.
-
-comm = MPI.COMM_WORLD
-size = comm.Get_size()
-rank = comm.Get_rank()
 
 folder_path = r'C:\Users\duina\repo\DA\task3\aclImdb\train\unsup'
 files = os.listdir(folder_path)
@@ -20,32 +15,17 @@ files = os.listdir(folder_path)
 # use 5% of texts for develop
 files = files[:int(len(files)*0.05)]
 
-if rank == 0:
-    # load text
-    texts = []
-    for file in files:
-        file_path = os.path.join(folder_path, file)
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                text = f.read()
-                texts.append(text)
-        except Exception as e:
-             print(f"Rank {rank}: Error reading file {file}: {e}")
+# load text
+texts = []
+for file in files:
+    file_path = os.path.join(folder_path, file)
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            text = f.read()
+            texts.append(text)
+    except Exception as e:
+            print(f"Error reading file {file}: {e}")
 
-    
-    # split texts
-    if texts:
-        texts = [texts[i::size] for i in range(size)]
-    else:
-        print(f"Rank {rank}: No texts were successfully loaded.")
-        texts = [[] for _ in range(size)]
-else:
-    texts = None
-
-# pass texts to each process
-texts = comm.scatter(texts, root=0)
-
-print(f"{rank=}, #texts={len(texts)}")
 #################################################################
 
 def clean_text(text: str):
@@ -92,6 +72,9 @@ for tokens in tokens_per_text:
 
 ######## Bag of Words model (BoW) - by bigram.           ########
 
+
+
+#################################################################
 
 
 ######## look for 5 similar reviews to the selected one. ########
