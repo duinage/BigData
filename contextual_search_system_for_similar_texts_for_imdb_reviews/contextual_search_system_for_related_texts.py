@@ -25,10 +25,10 @@ STEMMER = SnowballStemmer('english')
 
 # config
 FOLDER_PATH = r'C:\Users\duina\repo\DA\contextual_search_system_for_similar_texts_for_imdb_reviews\aclImdb\train\unsup'
-DATA_FRACTION = 0.1
-CHOSEN_TEXT_INDEX = 666
+DATA_FRACTION = 0.05
+CHOSEN_TEXT_INDEX = 2025
 NUM_RELATED_TO_FIND = 5
-CHAR_LIMIT_FOR_TEXT = 250
+CHAR_LIMIT_FOR_TEXT = 500
 USE_BIGRAMS = False
 VOCAB_MIN_FREQUENCY = 5
 
@@ -211,8 +211,6 @@ if __name__ == "__main__":
 
     bow_model = BagOfWords(use_bigrams=USE_BIGRAMS)
     bow_matrix = bow_model.fit_transform(texts)
-    bow_model.save_vocabulary_to_csv() # TODO: delete me
-    # print("\nVOCABULARY\n", bow_model.vocabulary)
 
     if bow_matrix.size == 0:
         print("Error: BoW matrix is empty. Cannot proceed with similarity analysis.")
