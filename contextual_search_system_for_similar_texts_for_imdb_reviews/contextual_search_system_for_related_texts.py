@@ -6,11 +6,10 @@ import re
 import time
 import string
 import numpy as np
-from bs4 import BeautifulSoup
 from sklearn.metrics.pairwise import pairwise_distances
 
 # config
-FOLDER_PATH = r'C:\Users\duina\repo\DA\contextual_search_system_for_similar_texts\aclImdb\train\unsup'
+FOLDER_PATH = r'C:\Users\duina\repo\DA\contextual_search_system_for_similar_texts_for_imdb_reviews\aclImdb\train\unsup'
 DATA_FRACTION = 0.05
 CHOSEN_TEXT_INDEX = 42
 NUM_RELATED_TO_FIND = 5
@@ -19,22 +18,19 @@ USE_BIGRAMS = False
 
 def clean_text(text: str) -> str:
     """Cleans text data by removing HTML tags, punctuation, and converting to lowercase."""
-    try:
-        if not isinstance(text, str):
-             print(f"Warning: Expected string input for clean_text, got {type(text)}. Skipping HTML removal.")
-        else:
-             soup = BeautifulSoup(text, "html.parser")
-             text = soup.get_text()
-    except Exception as e:
-        # Fallback for potential BeautifulSoup errors or if input wasn't string initially
-        print(f"Warning: Error parsing HTML or processing input: {e}. Using regex fallback for HTML removal.")
-        text = re.sub(r'<.*?>', '', text)
+    if not isinstance(text, str):
+        print(f"Warning: Expected string input for clean_text, got {type(text)}.")
+        return ""
+    
+    text = text.lower()
+    text = re.sub(r'<br\s*/?>', ' ', text)
+    text = re.sub(r'<[^>]+>', ' ', text) # remove general html tags
+    text = re.sub(r'[\x00-\x1F\x7F-\x9F]', ' ', text)
+    text = re.sub(r'\d+', '', text) # remove all numbers
 
     chars_to_remove = string.punctuation + '—–―…’“”‘’'
     translation_table = str.maketrans('', '', chars_to_remove)
     text = text.translate(translation_table) # Remove punctuation.
-
-    text = text.lower()
 
     text = re.sub(r'\s+', ' ', text).strip()
     return text
@@ -151,7 +147,7 @@ if __name__ == "__main__":
 
     bow_model = BagOfWords(use_bigrams=USE_BIGRAMS)
     bow_matrix = bow_model.fit_transform(texts)
-    # bow_model.save_vocabulary_to_csv() # TODO: delete me
+    bow_model.save_vocabulary_to_csv() # TODO: delete me
     # print("\nVOCABULARY\n", bow_model.vocabulary)
 
     if bow_matrix.size == 0:
