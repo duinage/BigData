@@ -10,6 +10,7 @@ import time
 import numpy as np
 from typing import List, Set, Optional
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.preprocessing import normalize
 
 # text/vocabulary cleaning
 import re
@@ -217,6 +218,8 @@ if __name__ == "__main__":
         print("Error: BoW matrix is empty. Cannot proceed with similarity analysis.")
         exit()
 
+    normalized_bow_matrix = normalize(bow_matrix, norm='l2', axis=1)
+
     if CHOSEN_TEXT_INDEX < 0 or CHOSEN_TEXT_INDEX >= len(texts):
         print(f"Error: CHOSEN_TEXT_INDEX ({CHOSEN_TEXT_INDEX}) is out of bounds for the loaded texts (0-{len(texts)-1}).")
         exit()
@@ -224,8 +227,8 @@ if __name__ == "__main__":
 
     print(f"\nFinding {NUM_RELATED_TO_FIND} texts similar to text #{CHOSEN_TEXT_INDEX} using Euclidean distance...")
 
-    chosen_vector = bow_matrix[CHOSEN_TEXT_INDEX].reshape(1, -1)
-    distances = pairwise_distances(chosen_vector, bow_matrix, metric='euclidean')[0]
+    chosen_vector_normalized = normalized_bow_matrix[CHOSEN_TEXT_INDEX].reshape(1, -1)
+    distances = pairwise_distances(chosen_vector_normalized, normalized_bow_matrix, metric='euclidean')[0]
     sorted_indices = np.argsort(distances)
 
     chosen_text = texts[CHOSEN_TEXT_INDEX]
