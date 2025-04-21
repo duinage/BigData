@@ -1,14 +1,14 @@
 # PROBLEM:
-# Create a system that offers five reviews (from IMDB reviews dataset) that are similar to the given one.
-# (we intuitively believe that the user who wrote the review will be interested in finding 
-# a movie that evokes similar impressions)
+# Create a system that offers five IMDB reviews that are similar to the given one.
+# (we intuitively believe that the user who wrote the review will be interested in finding a movie that evokes similar impressions)
+# Dataset: https://ai.stanford.edu/~amaas/data/sentiment/
 # Author: Vadym Tunik.
 
 # general
 import os
 import time
 import numpy as np
-from typing import List, Set, Dict, Optional
+from typing import List, Set, Optional
 from sklearn.metrics.pairwise import pairwise_distances
 
 # text/vocabulary cleaning
@@ -24,8 +24,8 @@ STEMMER = SnowballStemmer('english')
 
 # config
 FOLDER_PATH = r'C:\Users\duina\repo\DA\contextual_search_system_for_similar_texts_for_imdb_reviews\aclImdb\train\unsup'
-DATA_FRACTION = 0.05
-CHOSEN_TEXT_INDEX = 42
+DATA_FRACTION = 0.1
+CHOSEN_TEXT_INDEX = 666
 NUM_RELATED_TO_FIND = 5
 CHAR_LIMIT_FOR_TEXT = 250
 USE_BIGRAMS = False
