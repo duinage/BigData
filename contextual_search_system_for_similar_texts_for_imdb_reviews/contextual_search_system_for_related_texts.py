@@ -1,4 +1,5 @@
-# The task is to create a system that offers five reviews that are similar to the given one.
+# PROBLEM:
+# Create a system that offers five reviews (from IMDB reviews dataset) that are similar to the given one.
 # (we intuitively believe that the user who wrote the review will be interested in finding 
 # a movie that evokes similar impressions)
 # Author: Vadym Tunik.
@@ -7,16 +8,19 @@
 import os
 import time
 import numpy as np
+from typing import List, Set, Dict, Optional
 from sklearn.metrics.pairwise import pairwise_distances
 
 # text/vocabulary cleaning
 import re
-# import nltk
-# nltk.download('stopwords')
 import string
 import collections
+# import nltk
+# nltk.download('stopwords')
 from nltk.stem import SnowballStemmer # type: ignore
 from nltk.corpus import stopwords # type: ignore
+STOPWORDS_SET = set(stopwords.words("english"))
+STEMMER = SnowballStemmer('english')
 
 # config
 FOLDER_PATH = r'C:\Users\duina\repo\DA\contextual_search_system_for_similar_texts_for_imdb_reviews\aclImdb\train\unsup'
@@ -25,6 +29,7 @@ CHOSEN_TEXT_INDEX = 42
 NUM_RELATED_TO_FIND = 5
 CHAR_LIMIT_FOR_TEXT = 250
 USE_BIGRAMS = False
+VOCAB_MIN_FREQUENCY = 5
 
 def clean_text(text: str) -> str:
     """Cleans text data by removing HTML tags, punctuation, and converting to lowercase."""
@@ -45,7 +50,9 @@ def clean_text(text: str) -> str:
 def postprocess_vocabulary(
     initial_vocabulary: list[str] | set[str],
     tokens_per_clean_text: list[str],
-    min_frequency: int = 3
+    min_frequency: int = 3,
+    stopwords_set: Optional[Set[str]] = STOPWORDS_SET,
+    stemmer: Optional[SnowballStemmer] = STEMMER
 ) -> list[str]:
     """
     Post-processes a vocabulary list by removing rare words, removing stop words, and applying stemming.
@@ -58,14 +65,20 @@ def postprocess_vocabulary(
     initial_vocab_set = set(initial_vocabulary)
     frequent_words = {word for word in initial_vocab_set if word_counts.get(word, 0) >= min_frequency}
 
-    non_stop_words = {word for word in frequent_words if word not in set(stopwords.words("english"))}
+    if stopwords_set:
+        non_stop_words = {word for word in frequent_words if word not in stopwords_set}
+    else:
+        non_stop_words = frequent_words
 
-    stemmer = SnowballStemmer('english')
-    stemmed_vocabulary = set()
-    for word in non_stop_words:
-        stemmed_word = stemmer.stem(word)
-        if stemmed_word:
-            stemmed_vocabulary.add(stemmed_word)
+    if stemmer:
+        stemmed_vocabulary = set()
+        for word in non_stop_words:
+            stemmed_word = stemmer.stem(word)
+            if stemmed_word:
+                stemmed_vocabulary.add(stemmed_word)
+    else:
+        stemmed_vocabulary = non_stop_words
+
     return sorted(list(stemmed_vocabulary))
 
 
@@ -98,6 +111,52 @@ class BagOfWords:
             bigrams = [f"{tokens[i]}_{tokens[i+1]}" for i in range(len(tokens) - 1)]
             return bigrams
 
+    def _preprocess_corpus(self, corpus: List[str]) -> None:
+        """Cleans and tokenizes the corpus, building an initial vocabulary set."""
+        print("Cleaning and tokenizing texts...")
+        initial_vocab_set: Set[str] = set()
+        self._tokens_per_text = []
+
+        cleaned_corpus = [clean_text(text) for text in corpus]
+
+        for cleaned_text in cleaned_corpus:
+            tokens = self._tokenize(cleaned_text)
+            self._tokens_per_text.append(tokens)
+            initial_vocab_set.update(tokens)
+
+        print(f"____ Initial token count (unique): {len(initial_vocab_set)}")
+        self._initial_vocabulary_set = initial_vocab_set
+
+    def _build_final_vocabulary(self) -> None:
+        """Builds the final vocabulary using postprocessing steps."""
+        print("Building final vocabulary...")
+        self.vocabulary = postprocess_vocabulary(
+            initial_vocabulary=self._initial_vocabulary_set,
+            tokens_per_clean_text=self._tokens_per_text,
+            min_frequency=VOCAB_MIN_FREQUENCY,
+            stopwords_set=STOPWORDS_SET,
+            stemmer=STEMMER
+        )
+        self.word_to_index = {word: i for i, word in enumerate(self.vocabulary)}
+        print(f"____ Final vocabulary size: {len(self.vocabulary)}")
+
+    def _create_bow_matrix(self, num_texts: int) -> None:
+        print("Creating BoW matrix...")
+        vocabulary_len = len(self.vocabulary)
+        if vocabulary_len == 0:
+            print("Warning: Vocabulary is empty. No tokens were generated.")
+            self.bow_matrix = np.array([])
+            return None
+        
+        self.bow_matrix = np.zeros((num_texts, vocabulary_len))
+
+        for text_index, tokens in enumerate(self._tokens_per_text):
+            for token in tokens:
+                processed_token = STEMMER.stem(token) if STEMMER else token
+                if processed_token in self.word_to_index:
+                    index = self.word_to_index[processed_token]
+                    self.bow_matrix[text_index, index] += 1
+
     def fit_transform(self, corpus: list[str]) -> np.ndarray:
         """
         Cleans texts, builds vocabulary, creates token lists, and generates the BoW matrix.
@@ -111,50 +170,13 @@ class BagOfWords:
         print(f"Starting BoW process (use_bigrams={self.use_bigrams})...")
         start_time = time.time()
 
-        print("Step 1/4: Cleaning and tokenizing texts...")
-        vocabulary_set = set()
-        self._tokens_per_text = []
-
-        cleaned_corpus = [clean_text(text) for text in corpus]
-
-        for cleaned_text in cleaned_corpus:
-            tokens = self._tokenize(cleaned_text)
-            self._tokens_per_text.append(tokens)
-            vocabulary_set.update(tokens)
-
-        print("Step 2/4: Building vocabulary...")
-        initial_vocabulary = sorted(list(vocabulary_set))
-        self.vocabulary = postprocess_vocabulary(
-            initial_vocabulary=initial_vocabulary,
-            tokens_per_clean_text=self._tokens_per_text,
-            min_frequency=5
-        )
-        self.word_to_index = {word: i for i, word in enumerate(self.vocabulary)}
-        vocabulary_len = len(self.vocabulary)
-
-        if vocabulary_len == 0:
-             print("Warning: Vocabulary is empty. No tokens were generated.")
-             self.bow_matrix = np.array([])
-             return self.bow_matrix
-
-        print(f"    vocabulary size: {vocabulary_len}")
-
-        print("Step 3/4: Creating BoW matrix...")
-        bow_matrix_list = []
-        for tokens in self._tokens_per_text:
-            vector = [0] * vocabulary_len
-            for token in tokens:
-                if token in self.word_to_index: # Check if token exists (it should)
-                    index = self.word_to_index[token]
-                    vector[index] += 1
-            bow_matrix_list.append(vector)
-
-        self.bow_matrix = np.array(bow_matrix_list)
+        self._preprocess_corpus(corpus)
+        self._build_final_vocabulary()
+        self._create_bow_matrix(num_texts=len(corpus))
 
         end_time = time.time()
-        print(f"Step 4/4: BoW process finished. Shape: {self.bow_matrix.shape}")
-        print(f"    total time: {end_time - start_time:.2f} seconds")
-
+        print(f"BoW process finished. Shape: {self.bow_matrix.shape}")
+        print(f"____ Total time: {end_time - start_time:.2f} seconds")
         return self.bow_matrix
     
     def save_vocabulary_to_csv(self, filepath: str = "vocabulary.txt"):
