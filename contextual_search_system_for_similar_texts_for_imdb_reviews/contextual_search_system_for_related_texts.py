@@ -1,4 +1,6 @@
 # The task is to create a system that offers five reviews that are similar to the given one.
+# (we intuitively believe that the user who wrote the review will be interested in finding 
+# a movie that evokes similar impressions)
 # Author: Vadym Tunik.
 
 # general
@@ -9,12 +11,12 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 # text/vocabulary cleaning
 import re
-import nltk
+# import nltk
 # nltk.download('stopwords')
 import string
 import collections
-from nltk.stem import SnowballStemmer
-from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer # type: ignore
+from nltk.corpus import stopwords # type: ignore
 
 # config
 FOLDER_PATH = r'C:\Users\duina\repo\DA\contextual_search_system_for_similar_texts_for_imdb_reviews\aclImdb\train\unsup'
@@ -125,7 +127,7 @@ class BagOfWords:
         self.vocabulary = postprocess_vocabulary(
             initial_vocabulary=initial_vocabulary,
             tokens_per_clean_text=self._tokens_per_text,
-            min_frequency=2
+            min_frequency=5
         )
         self.word_to_index = {word: i for i, word in enumerate(self.vocabulary)}
         vocabulary_len = len(self.vocabulary)
