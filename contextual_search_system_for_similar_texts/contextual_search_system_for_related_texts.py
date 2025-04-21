@@ -10,8 +10,8 @@ from bs4 import BeautifulSoup
 from sklearn.metrics.pairwise import pairwise_distances
 
 # config
-FOLDER_PATH = r'C:\Users\duina\repo\DA\task3\aclImdb\train\unsup'
-DATA_FRACTION = 1.
+FOLDER_PATH = r'C:\Users\duina\repo\DA\contextual_search_system_for_similar_texts\aclImdb\train\unsup'
+DATA_FRACTION = 0.05
 CHOSEN_TEXT_INDEX = 42
 NUM_RELATED_TO_FIND = 5
 CHAR_LIMIT_FOR_TEXT = 250
@@ -119,6 +119,9 @@ class BagOfWords:
         print(f"    total time: {end_time - start_time:.2f} seconds")
 
         return self.bow_matrix
+    
+    def save_vocabulary_to_csv(self, filepath: str = "vocabulary.txt"):
+        np.savetxt(filepath, self.vocabulary, fmt='%s')
 
 
 if __name__ == "__main__":
@@ -148,6 +151,8 @@ if __name__ == "__main__":
 
     bow_model = BagOfWords(use_bigrams=USE_BIGRAMS)
     bow_matrix = bow_model.fit_transform(texts)
+    # bow_model.save_vocabulary_to_csv() # TODO: delete me
+    # print("\nVOCABULARY\n", bow_model.vocabulary)
 
     if bow_matrix.size == 0:
         print("Error: BoW matrix is empty. Cannot proceed with similarity analysis.")

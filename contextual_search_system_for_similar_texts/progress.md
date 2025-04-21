@@ -1,0 +1,1 @@
+bow model with bad voc cleaning: min dist = 9.11
