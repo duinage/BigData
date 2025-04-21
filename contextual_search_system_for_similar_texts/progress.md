@@ -1,1 +1,3 @@
-bow model with bad voc cleaning: min dist = 9.11
+*polishing BoW model (5% dataset):*
+- initital: best min dist = 9.11
+- 
