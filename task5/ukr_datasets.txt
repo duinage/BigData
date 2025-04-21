@@ -1,0 +1,2 @@
+https://huggingface.co/datasets/Yehor/news-headlines-ubercorpus
+https://huggingface.co/datasets/Yehor/ual-topics

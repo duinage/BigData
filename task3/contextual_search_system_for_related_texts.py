@@ -11,7 +11,7 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 # config
 FOLDER_PATH = r'C:\Users\duina\repo\DA\task3\aclImdb\train\unsup'
-DATA_FRACTION = 0.1
+DATA_FRACTION = 1.
 CHOSEN_TEXT_INDEX = 42
 NUM_RELATED_TO_FIND = 5
 CHAR_LIMIT_FOR_TEXT = 250
