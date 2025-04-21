@@ -1,6 +1,6 @@
-# The task is to create a system (based on Bag of Words model) that offers the reader 
-# five texts that are similar in topic to the given one.
+# The task is to create a system that offers five reviews that are similar to the given one.
 # Author: Vadym Tunik.
+
 import os
 import re
 import time
