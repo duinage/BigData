@@ -19,20 +19,17 @@ USE_BIGRAMS = False
 def clean_text(text: str) -> str:
     """Cleans text data by removing HTML tags, punctuation, and converting to lowercase."""
     if not isinstance(text, str):
-        print(f"Warning: Expected string input for clean_text, got {type(text)}.")
-        return ""
+        raise TypeError(f"Expected string input for clean_text, got {type(text)}.")
     
     text = text.lower()
-    text = re.sub(r'<br\s*/?>', ' ', text)
     text = re.sub(r'<[^>]+>', ' ', text) # remove general html tags
     text = re.sub(r'[\x00-\x1F\x7F-\x9F]', ' ', text)
     text = re.sub(r'\d+', '', text) # remove all numbers
+    text = re.sub(r'\s+', ' ', text).strip()
 
     chars_to_remove = string.punctuation + '—–―…’“”‘’'
     translation_table = str.maketrans('', '', chars_to_remove)
     text = text.translate(translation_table) # Remove punctuation.
-
-    text = re.sub(r'\s+', ' ', text).strip()
     return text
 
 
