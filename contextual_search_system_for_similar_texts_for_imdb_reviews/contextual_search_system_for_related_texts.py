@@ -1,12 +1,20 @@
 # The task is to create a system that offers five reviews that are similar to the given one.
 # Author: Vadym Tunik.
 
+# general
 import os
-import re
 import time
-import string
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
+
+# text/vocabulary cleaning
+import re
+import nltk
+# nltk.download('stopwords')
+import string
+import collections
+from nltk.stem import SnowballStemmer
+from nltk.corpus import stopwords
 
 # config
 FOLDER_PATH = r'C:\Users\duina\repo\DA\contextual_search_system_for_similar_texts_for_imdb_reviews\aclImdb\train\unsup'
@@ -31,6 +39,32 @@ def clean_text(text: str) -> str:
     translation_table = str.maketrans('', '', chars_to_remove)
     text = text.translate(translation_table) # Remove punctuation.
     return text
+
+def postprocess_vocabulary(
+    initial_vocabulary: list[str] | set[str],
+    tokens_per_clean_text: list[str],
+    min_frequency: int = 3
+) -> list[str]:
+    """
+    Post-processes a vocabulary list by removing rare words, removing stop words, and applying stemming.
+    lang: english.
+    """
+    word_counts = collections.Counter()
+    for tokens in tokens_per_clean_text:
+        word_counts.update(tokens)
+
+    initial_vocab_set = set(initial_vocabulary)
+    frequent_words = {word for word in initial_vocab_set if word_counts.get(word, 0) >= min_frequency}
+
+    non_stop_words = {word for word in frequent_words if word not in set(stopwords.words("english"))}
+
+    stemmer = SnowballStemmer('english')
+    stemmed_vocabulary = set()
+    for word in non_stop_words:
+        stemmed_word = stemmer.stem(word)
+        if stemmed_word:
+            stemmed_vocabulary.add(stemmed_word)
+    return sorted(list(stemmed_vocabulary))
 
 
 class BagOfWords:
@@ -78,16 +112,24 @@ class BagOfWords:
         print("Step 1/4: Cleaning and tokenizing texts...")
         vocabulary_set = set()
         self._tokens_per_text = []
-        for text in corpus:
-            cleaned_text = clean_text(text)
+
+        cleaned_corpus = [clean_text(text) for text in corpus]
+
+        for cleaned_text in cleaned_corpus:
             tokens = self._tokenize(cleaned_text)
             self._tokens_per_text.append(tokens)
             vocabulary_set.update(tokens)
 
         print("Step 2/4: Building vocabulary...")
-        self.vocabulary = sorted(list(vocabulary_set))
+        initial_vocabulary = sorted(list(vocabulary_set))
+        self.vocabulary = postprocess_vocabulary(
+            initial_vocabulary=initial_vocabulary,
+            tokens_per_clean_text=self._tokens_per_text,
+            min_frequency=2
+        )
         self.word_to_index = {word: i for i, word in enumerate(self.vocabulary)}
         vocabulary_len = len(self.vocabulary)
+
         if vocabulary_len == 0:
              print("Warning: Vocabulary is empty. No tokens were generated.")
              self.bow_matrix = np.array([])
