@@ -1,3 +1,3 @@
 data/
-contextual_search_system_for_similar_texts_for_imdb_reviews/aclImdb
+imdb_reviews_analysis/aclImdb
 test.ipynb
