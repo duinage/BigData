@@ -209,6 +209,54 @@ class BagOfWords:
         print(f"____ Total time: {end_time - start_time:.2f} seconds")
         return self.bow_matrix
 
+    def transform(self, corpus: List[str]) -> np.ndarray:
+        """
+        Transforms a given corpus into a BoW matrix using the existing vocabulary.
+
+        Args:
+            corpus (list[str]): A list of text documents to transform.
+
+        Returns:
+            np.ndarray: The Bag of Words matrix for the input corpus.
+        """
+        print(f"\nTransforming {len(corpus)} documents using existing vocabulary...")
+        start_time = time.time()
+
+        if not self.vocabulary:
+            raise RuntimeError("Vocabulary not built. Call fit_transform() first.")
+        if not corpus:
+            print("Warning: Input corpus for transform is empty.")
+            return np.zeros((0, len(self.vocabulary)), dtype=np.float32)
+
+        num_texts = len(corpus)
+        vocabulary_len = len(self.vocabulary)
+        new_bow_matrix = np.zeros((num_texts, vocabulary_len), dtype=np.float32)
+
+        stemming_active = STEMMER is not None
+
+        cleaned_texts = [clean_text(text) for text in corpus]
+        tokenized_texts = [self._tokenize(ct) for ct in cleaned_texts]
+
+        for text_index, doc_tokens in enumerate(tokenized_texts):
+            if text_index % 1000 == 0 and text_index > 0:
+                 print(f"____ Transformed {text_index} texts...")
+
+            token_counts = collections.Counter()
+            
+            for token in doc_tokens:
+                processed_token = STEMMER.stem(token) if stemming_active and STEMMER else token
+                token_counts[processed_token] += 1
+
+            for token, count in token_counts.items():
+                if token in self.word_to_index:
+                    index = self.word_to_index[token]
+                    new_bow_matrix[text_index, index] = count
+
+        end_time = time.time()
+        print(f"Transformation finished. Shape: {new_bow_matrix.shape}")
+        print(f"____ Transformation time: {end_time - start_time:.2f} seconds")
+        return new_bow_matrix
+
     def save_vocabulary(self, filepath: str = "vocabulary.txt") -> None:
         """Saves the final vocabulary list to a text file."""
         if not self.vocabulary:
