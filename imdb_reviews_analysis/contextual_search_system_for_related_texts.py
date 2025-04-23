@@ -1,9 +1,7 @@
 import os
-import time
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.preprocessing import normalize
-from bow_model import BagOfWords, clean_text
 from typing import Tuple
 
 
